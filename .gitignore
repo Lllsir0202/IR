@@ -1,2 +1,5 @@
 # Not push dataset
 crawled_data/
+
+# Not push pagerankscore
+pr_score/pagerankscore.json
