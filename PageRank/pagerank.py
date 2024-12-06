@@ -115,5 +115,5 @@ file_dir = "crawled_link_data"
 link_graph = get_link_graph(file_dir)
 pagerankscore = cal_pagerank(link_graph=link_graph)
 
-store_path = "pr_score"
+store_path = "data/pr_score"
 save_pagerank(output_dir=store_path, pagerank_score=pagerankscore)

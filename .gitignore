@@ -2,5 +2,5 @@
 crawled_data/
 crawled_link_data/
 
-# Not push pagerankscore
-pr_score/pagerankscore.json
+# Not push data and model
+data/
