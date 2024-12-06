@@ -3,16 +3,34 @@
 
 import os
 import json
-import re
 from collections import defaultdict
 import numpy as np
 from scipy.sparse import csr_matrix,lil_matrix
 from scipy.linalg import norm
+import requests
+from bs4 import BeautifulSoup
+from urllib.parse import urljoin  # import urljoin to deal with relative path
+from urllib.parse import urlparse  # import urlparse to deal with relative path
+
 
 # First extract url in context
-def extract_url(text):
-    # Using re package to get all url
-    return re.findall(f'https?://[^\s]+',text)
+def extract_url(url):
+    try:
+        response = requests.get(url)
+        soup = BeautifulSoup(response.text, 'lxml')
+
+        # 获取所有的链接
+        links = [urljoin(url, link['href']) for link in soup.find_all('a', href=True)]
+
+        # 过滤掉不属于 nankai.edu.cn 域名的链接
+        filtered_links = [link for link in links if 'nankai.edu.cn' in urlparse(link).netloc]
+
+        print(f'Succeeded to extract {len(filtered_links)} links from {url}')
+        return filtered_links
+    except Exception as e:
+        print(f"Error fetching URL {url}: {str(e)}")
+        return []
+
 
 # Next we need to get the url one by one and build a link grpah
 def get_link_graph(json_dir):
@@ -26,14 +44,13 @@ def get_link_graph(json_dir):
             with open(file_path, "r", encoding='utf-8') as file:
                 data = json.load(file)
                 url = data.get('url')
-                context = data.get('body')
-                links = extract_url(context)
+                links = extract_url(url=url)
                 cnt = cnt + 1
 
                 # if url exists , then store links
                 if url:
-                    link_graph[url] = links
-                print(f'Succeed to deal with the {cnt}th json \n')
+                    link_graph[url] = list(set(links))
+                    print(f'Succeed to deal with the {cnt}th json \n')
 
     print(f'Finish Successfully! The linkgraph size is {len(link_graph)} \n')
     return link_graph

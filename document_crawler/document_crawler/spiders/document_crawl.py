@@ -6,30 +6,41 @@ import fitz  # PyMuPDF
 from docx import Document
 from document_crawler.items import DocumentCrawlerItem
 from bs4 import BeautifulSoup
+from urllib.parse import urljoin  # import urljoin to deal with relative path
+from urllib.parse import urlparse  # import urlparse to deal with relative path
 
 class DocumentSpider(scrapy.Spider):
     name = 'document_spider'
     allowed_domains = ['nankai.edu.cn']
-    start_urls = ['https://news.nankai.edu.cn/']
-    output_directory = '../crawled_data'  # 保存路径，使用绝对路径
-    max_pages = 50000  # 设定最大抓取页面数量
-    pages_crawled = 0  # 当前已抓取页面数量
+    start_urls = list()
+    output_directory = '../crawled_link_data'  # 保存路径，使用绝对路径
 
     def __init__(self, *args, **kwargs):
         super(DocumentSpider, self).__init__(*args, **kwargs)
         if not os.path.exists(self.output_directory):
             os.makedirs(self.output_directory)
+        json_dir = '../crawled_data'
+        for file_name in os.listdir(json_dir):
+            if file_name.endswith('json'):
+                file_path = os.path.join(json_dir, file_name)
+                with open(file_path, "r", encoding='utf-8') as file:
+                    data = json.load(file)
+                    url = data.get('url')
+                    self.start_urls.append(url)
 
     def parse(self, response):
         """主页面解析方法"""
-        if self.pages_crawled >= self.max_pages:  # 检查是否达到最大页面数
-            self.logger.info(f"Reached max page count: {self.max_pages}")
-            return  # 在这里停止爬取
         
         # 只有 HTML 页面才用 BeautifulSoup 解析
         if "text/html" in response.headers.get('Content-Type', '').decode():
             # 使用 BeautifulSoup 来解析 HTML 内容
             soup = BeautifulSoup(response.text, 'lxml')
+
+            # 获取所有的链接
+            links = [urljoin(response.url, link['href']) for link in soup.find_all('a', href=True)]
+
+            # 过滤掉不属于 nankai.edu.cn 域名的链接
+            filtered_links = [link for link in links if 'nankai.edu.cn' in urlparse(link).netloc]
 
             # 去除不需要的标签，例如广告、脚本、样式等
             for script in soup(["script", "style", "header", "footer", "nav"]):
@@ -46,9 +57,10 @@ class DocumentSpider(scrapy.Spider):
             item['url'] = response.url
             item['title'] = response.css('title::text').get()
             item['body'] = body
+            item['links'] = list(set(filtered_links))
             self.save_as_json(item)
 
-            self.pages_crawled += 1  # 增加已抓取页面计数
+            #self.pages_crawled += 1  # 增加已抓取页面计数
 
             # 处理网页中的 PDF 和 DOCX 链接
             links = soup.find_all('a', href=True)
@@ -58,8 +70,8 @@ class DocumentSpider(scrapy.Spider):
                     yield scrapy.Request(full_url, callback=self.handle_pdf)
                 elif full_url.endswith('.docx'):
                     yield scrapy.Request(full_url, callback=self.handle_docx)
-                elif full_url.startswith('http') and self.pages_crawled < self.max_pages:
-                    yield scrapy.Request(full_url, callback=self.parse)  # 递归爬取
+                '''elif full_url.startswith('http') and self.pages_crawled < self.max_pages:
+                    yield scrapy.Request(full_url, callback=self.parse)  # 递归爬取'''
 
         else:
             # 如果是 PDF 或 DOCX 文件，则直接处理二进制内容
