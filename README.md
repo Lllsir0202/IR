@@ -3,7 +3,7 @@ This is a simple web search engine
 
 # System condition
 
-    Ubuntu 23.04
+    Ubuntu 24.04
     python 3.12.3
     packages:scrapy,BeautifulSoup,re,numpy,scipy and so on
 
@@ -19,3 +19,10 @@ In directory ``PageRank``, And I finish a Makefile to make it , you can use comm
 
 ## Inverted_index
 
+Although I do the part of inverted index , but in fact it seems not used in my tasks. Because I will use ``sklearn`` to finish the part of ``td-idf``
+
+You can use command ``make invert`` to cal all words of title and body into inverted index but be careful because its size is very huge
+
+## Tf-Idf
+
+In this part I will use ``sklearn`` to calculate it automatically.
