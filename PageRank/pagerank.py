@@ -37,7 +37,7 @@ def get_link_graph(json_dir):
     return link_graph
 
 # Then We should calculate pagerank
-def cal_pagerank(link_graph, d = 0.85, max_iter = 100, tol = 1e-6):
+def cal_pagerank(link_graph, d = 0.85, max_iter = 100, tol = 1e-4):
     # First we need to convert graph to numpy
     # Get urls
     nodes = list(link_graph.keys())
@@ -47,6 +47,9 @@ def cal_pagerank(link_graph, d = 0.85, max_iter = 100, tol = 1e-6):
     # Get total urls 
     N = len(nodes)
     
+    # Change tol by the size of graph
+    tol = tol / N
+
     # Use csr_matrix to store
     row = []
     col = []
@@ -83,11 +86,14 @@ def cal_pagerank(link_graph, d = 0.85, max_iter = 100, tol = 1e-6):
     
     for i in range(max_iter):
         new_pagerank = d * pagerank @ M  + (1 - d) / N
-        print(f'Succeed to iter circles {i} / {max_iter} \n')
-        if norm(new_pagerank - pagerank, 1) < tol:
-            print(f'Finish cal iter\n')
+        # Using relative diff to modify pagerank change
+        relative_diff = norm(new_pagerank - pagerank, 1) / norm(pagerank, 1)
+        print(f'Finish {i} times , total {max_iter} times...')
+        if relative_diff < tol:
+            print(f'Finish cal iter')
             print(f'Start to save pagescore...')
             break
+        pagerank = new_pagerank
         
     pagerankscore = {nodes[i]: pagerank[i] for i in range(N)}
     return pagerankscore
@@ -111,5 +117,3 @@ pagerankscore = cal_pagerank(link_graph=link_graph)
 
 store_path = "pr_score"
 save_pagerank(output_dir=store_path, pagerank_score=pagerankscore)
-for key, value in list(link_graph.items())[:10]:  # 打印前10个节点
-    print(f"{key} -> {value}")
