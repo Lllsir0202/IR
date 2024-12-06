@@ -13,26 +13,7 @@ from urllib.parse import urljoin  # import urljoin to deal with relative path
 from urllib.parse import urlparse  # import urlparse to deal with relative path
 
 
-# First extract url in context
-def extract_url(url):
-    try:
-        response = requests.get(url)
-        soup = BeautifulSoup(response.text, 'lxml')
-
-        # 获取所有的链接
-        links = [urljoin(url, link['href']) for link in soup.find_all('a', href=True)]
-
-        # 过滤掉不属于 nankai.edu.cn 域名的链接
-        filtered_links = [link for link in links if 'nankai.edu.cn' in urlparse(link).netloc]
-
-        print(f'Succeeded to extract {len(filtered_links)} links from {url}')
-        return filtered_links
-    except Exception as e:
-        print(f"Error fetching URL {url}: {str(e)}")
-        return []
-
-
-# Next we need to get the url one by one and build a link grpah
+# we need to get the url one by one and build a link grpah
 def get_link_graph(json_dir):
     # using defaultdict to store graph
     link_graph = defaultdict(list)
@@ -44,11 +25,11 @@ def get_link_graph(json_dir):
             with open(file_path, "r", encoding='utf-8') as file:
                 data = json.load(file)
                 url = data.get('url')
-                links = extract_url(url=url)
+                links = data.get('links')
                 cnt = cnt + 1
 
                 # if url exists , then store links
-                if url:
+                if url and links:
                     link_graph[url] = list(set(links))
                     print(f'Succeed to deal with the {cnt}th json \n')
 
@@ -123,7 +104,8 @@ def save_pagerank(output_dir, pagerank_score):
     print(f'Succeed to save pagerank score as json in {file_path}\n')
 
 # Start to cal
-file_dir = "crawled_data"
+# Change: use new data
+file_dir = "crawled_link_data"
 link_graph = get_link_graph(file_dir)
 pagerankscore = cal_pagerank(link_graph=link_graph)
 

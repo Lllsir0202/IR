@@ -41,6 +41,7 @@ class DocumentSpider(scrapy.Spider):
 
             # 过滤掉不属于 nankai.edu.cn 域名的链接
             filtered_links = [link for link in links if 'nankai.edu.cn' in urlparse(link).netloc]
+            filtered_links = list(set(filtered_links))
 
             # 去除不需要的标签，例如广告、脚本、样式等
             for script in soup(["script", "style", "header", "footer", "nav"]):
@@ -57,7 +58,7 @@ class DocumentSpider(scrapy.Spider):
             item['url'] = response.url
             item['title'] = response.css('title::text').get()
             item['body'] = body
-            item['links'] = list(set(filtered_links))
+            item['links'] = filtered_links
             self.save_as_json(item)
 
             #self.pages_crawled += 1  # 增加已抓取页面计数
@@ -86,6 +87,7 @@ class DocumentSpider(scrapy.Spider):
         item['url'] = response.url
         item['title'] = response.url.split('/')[-1]
         item['body'] = text
+        item['links'] = []
         self.save_as_json(item)
 
     def handle_docx(self, response):
@@ -94,6 +96,7 @@ class DocumentSpider(scrapy.Spider):
         item['url'] = response.url
         item['title'] = response.url.split('/')[-1]
         item['body'] = text
+        item['links'] = []
         self.save_as_json(item)
 
     def extract_pdf_text(self, response):
