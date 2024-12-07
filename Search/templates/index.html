@@ -3,25 +3,149 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Search Engine</title>
+    <title>My Web Search Engine</title>
+
+    <link rel="icon" href="search.svg" type="image/x-icon">
+
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        .result { margin: 10px 0; }
-        .result a { color: blue; text-decoration: none; }
-        .result a:hover { text-decoration: underline; }
-        .result p { margin: 5px 0; color: gray; }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            font-size: 18px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 32px;
+        }
+
+        .result {
+            margin: 10px 0;
+            font-size: 18px;
+        }
+
+        .result a {
+            color: blue;
+            text-decoration: none;
+            font-size: 20px;
+        }
+
+        .result a:hover {
+            text-decoration: underline;
+        }
+
+        .result p {
+            margin: 5px 0;
+            color: gray;
+            font-size: 16px;
+        }
+
+        input[type="text"] {
+            width: 350px;
+            padding: 8px;
+            font-size: 18px;
+        }
+
+        button {
+            padding: 8px 12px;
+            font-size: 18px;
+        }
+
+        /* 登录信息显示样式 */
+        #user-info {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        #user-info span {
+            margin-right: 10px;
+        }
+
+        /* 蓝色链接样式 */
+        #login-btn {
+            color: blue;
+            font-size: 14px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            text-decoration: underline;
+        }
+
+        #logout-btn {
+            padding: 8px 12px;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
     <h1>搜索引擎</h1>
-    <input type="text" id="search-query" placeholder="Enter your query..." style="width: 300px; padding: 5px;" />
-    <button id="search-button">Search</button>
 
-    <div id="results"></div>
+    <!-- 用户信息显示区域 -->
+    <div id="user-info">
+        <span id="username"></span>
+        <button id="logout-btn" style="display:none;">注销</button>
+        <button id="login-btn" style="display:none;">登录</button>
+    </div>
+
+    <!-- 添加搜索方式选择 -->
+    <div style="text-align: center;">
+        <label><input type="radio" id="search-title" name="search-type" value="title" checked /> 按标题搜索</label>
+        <label><input type="radio" id="search-body" name="search-type" value="body" /> 按内容搜索</label>
+    </div>
+
+    <div style="text-align: center; margin-top: 20px;">
+        <input type="text" id="search-query" placeholder="Enter your query..." />
+        <button id="search-button">搜索</button>
+    </div>
+
+    <div id="results" style="text-align: center; margin-top: 20px;"></div>
 
     <script>
+        // 页面加载时检查登录状态
+        window.onload = function() {
+            const userInfo = localStorage.getItem('user'); // 获取存储的用户信息
+            const usernameElement = document.getElementById('username');
+            const loginBtn = document.getElementById('login-btn');
+            const logoutBtn = document.getElementById('logout-btn');
+            document.getElementById('search-query').value = ''
+            document.getElementById('search-title').checked = true
+            document.getElementById('search-body').checked = false
+
+            if (userInfo) {
+                // 用户已登录，显示用户名和注销按钮
+                usernameElement.textContent = `欢迎, ${userInfo}`;
+                loginBtn.style.display = 'none';
+                logoutBtn.style.display = 'inline-block';
+            } else {
+                // 用户未登录，显示登录按钮
+                usernameElement.textContent = '';
+                loginBtn.style.display = 'inline-block';
+                logoutBtn.style.display = 'none';
+            }
+        };
+
+        // 登录按钮点击事件
+        document.getElementById('login-btn').addEventListener('click', function() {
+            const username = prompt("请输入用户名：");
+
+            if (username) {
+                localStorage.setItem('user', username); // 保存用户名到 localStorage
+                window.location.reload(); // 刷新页面以更新显示
+            }
+        });
+
+        // 注销按钮点击事件
+        document.getElementById('logout-btn').addEventListener('click', function() {
+            localStorage.removeItem('user'); // 删除登录信息
+            window.location.reload(); // 刷新页面以更新显示
+        });
+
+        // 搜索按钮点击事件
         document.getElementById('search-button').addEventListener('click', function () {
             const query = document.getElementById('search-query').value;
+            const searchType = document.querySelector('input[name="search-type"]:checked').value;  // 获取选择的搜索类型
+            
             if (!query) {
                 alert('请输入一个查询语句');
                 return;
@@ -34,11 +158,10 @@
                     'Access-Control-Allow-Origin': 'http://127.0.0.1',
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ query: query })  // 将查询放入请求体中
+                body: JSON.stringify({ query: query, search_type: searchType })  // 将查询和搜索类型传递
             })
                 .then(response => response.json())
                 .then(data => {
-                    console.log(data)
                     const resultsContainer = document.getElementById('results');
                     resultsContainer.innerHTML = ''; // 清空之前的结果
 

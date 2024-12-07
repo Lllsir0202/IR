@@ -97,11 +97,12 @@ def search(query, tfidf_matrix, vectorizer, urls, pageranks, features, alpha = 0
         pagerank = pageranks.get(url, 1 / N)
         if cosine_similarities[0,index] == 1:
             combined_score = 1
-        if cosine_similarities[0,index] == 0:
+        elif cosine_similarities[0,index] == 0:
             combined_score = 0
         else:
             combined_score = cosine_similarities[0, index] * alpha + pagerank * beta
-        results.append((url, combined_score))  # Store url and similarities
+        if combined_score > 1e-6:
+            results.append((url, combined_score))  # Store url and similarities
     results = sorted(results, key=lambda x: (x[1],-len(x[0])), reverse=True)
 
     return results

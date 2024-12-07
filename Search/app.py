@@ -32,14 +32,19 @@ def home():
     if request.method == 'POST':
         data = request.get_json()
         query = data.get('query')
-        results_body = search(query, loaded_matrix_body, vectorizer_body, loaded_urls_body, pageranks, features_body)
-        results = list(map(lambda x: x[0], results_body))
-        results = sorted(results, key=lambda x: (x[1],-len(x[0])), reverse=True)
+        search_type = data.get('search_type', 'title')  # 获取搜索类型，默认按标题搜索
+
+        if search_type == 'title':
+            results = search(query, loaded_matrix_title, vectorizer_title, loaded_urls_title, pageranks, features_title)
+        else:  # 默认为按内容搜索
+            results = search(query, loaded_matrix_body, vectorizer_body, loaded_urls_body, pageranks, features_body)
+
+        results_dict = {url: score for url, score in results}
+        results = list(map(lambda x: x[0], results))
         results = results[:100]
+
         data_path = 'crawled_link_data'
-
         final_results = []
-
 
         for file_name in os.listdir(data_path):
             if file_name.endswith('json'):
@@ -47,21 +52,33 @@ def home():
                 with open(file_path, "r", encoding='utf-8') as file:
                     data = json.load(file)
                     url = data.get('url')
-                    title = data.get('title','')
+                    title = data.get('title', '')
                     body = data.get('body', '')
                     if url in results:
-                        cleaned_text = re.sub(r'\s+', ' ', body).strip()
-                        text = cleaned_text[:30]
-                        final_results.append(
-                            {
-                                'url':url,
-                                'title':title,
-                                'body':text
-                            }
-                        )
+                        if title and body:
+                            cleaned_title = re.sub(r'\s+', ' ', title).strip()
+                            cleaned_text = re.sub(r'\s+', ' ', body).strip()
+                            text = cleaned_text[:100]  
+                            title = cleaned_title
+                        else:
+                            text = body
+                        final_results.append({
+                            'score': results_dict[url],
+                            'url': url,
+                            'title': title,
+                            'body': text
+                        })
+        final_results = sorted(final_results, key=lambda x: (x['score'] ,-len(x['url'])), reverse=True)
+        return jsonify({'results': final_results})
+    
+    return jsonify({'results': None})
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
         
         return jsonify({'results': final_results})
-    return jsonify({'results'}, results=None)
+    return jsonify({'results': None})
 
 if __name__ == '__main__':
     app.run(debug=True)
