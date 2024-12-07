@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -76,8 +77,49 @@
             padding: 8px 12px;
             font-size: 14px;
         }
+
+        /* 推荐窗口样式 */
+        #recommendation-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 250px;
+            background: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 8px;
+            display: none;
+            /* 初始隐藏 */
+        }
+
+        #recommendation-container h3 {
+            font-size: 16px;
+            margin: 0 0 10px;
+        }
+
+        #recommendation-container ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        #recommendation-container ul li {
+            font-size: 14px;
+            color: gray;
+            margin: 5px 0;
+        }
+
+        #recommendation-container ul li a {
+            color: blue;
+            text-decoration: none;
+        }
+
+        #recommendation-container ul li a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
+
 <body>
     <h1>搜索引擎</h1>
 
@@ -99,34 +141,112 @@
         <button id="search-button">搜索</button>
     </div>
 
+    <!-- 历史记录浮窗 -->
+    <div id="history-container"
+        style="display:none; position: fixed; top: 100px; right: 20px; width: 250px; background: white; box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); padding: 10px; border-radius: 8px;">
+        <h3 style="font-size: 16px; margin: 0 0 10px;">历史记录</h3>
+        <div id="history-content" style="max-height: 200px; overflow-y: auto; font-size: 14px; color: gray;"></div>
+    </div>
+
+    <!-- 推荐内容窗口 -->
+    <div id="recommendation-container">
+        <h3>推荐内容</h3>
+        <ul id="recommendation-list">
+            <!-- 推荐内容将在这里显示 -->
+        </ul>
+    </div>
+
     <div id="results" style="text-align: center; margin-top: 20px;"></div>
 
     <script>
-        // 页面加载时检查登录状态
-        window.onload = function() {
+        // 定义浮窗及内容容器
+        const historyContainer = document.getElementById('history-container');
+        const historyContent = document.getElementById('history-content');
+        const recommendationContainer = document.getElementById('recommendation-container');
+        const recommendationList = document.getElementById('recommendation-list');
+
+        // 页面加载时检查登录状态并初始化历史记录
+        window.onload = function () {
             const userInfo = localStorage.getItem('user'); // 获取存储的用户信息
             const usernameElement = document.getElementById('username');
             const loginBtn = document.getElementById('login-btn');
             const logoutBtn = document.getElementById('logout-btn');
-            document.getElementById('search-query').value = ''
-            document.getElementById('search-title').checked = true
-            document.getElementById('search-body').checked = false
+            document.getElementById('search-query').value = '';
+            document.getElementById('search-title').checked = true;
+            document.getElementById('search-body').checked = false;
 
             if (userInfo) {
                 // 用户已登录，显示用户名和注销按钮
                 usernameElement.textContent = `欢迎, ${userInfo}`;
                 loginBtn.style.display = 'none';
                 logoutBtn.style.display = 'inline-block';
+
+                // 发起请求获取历史记录
+                fetch('http://127.0.0.1:5000/login', {
+                    method: 'POST',
+                    headers: {
+                        'Access-Control-Allow-Origin': 'http://127.0.0.1',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username: userInfo }) // 发送用户名
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        const history = data.history || []; // 假设返回 JSON 格式：{ "history": ["记录1", "记录2", ...] }
+                        if (history.length > 0) {
+                            historyContent.innerHTML = ''; // 清空之前的内容
+                            history.forEach(item => {
+                                const historyItem = document.createElement('div');
+                                historyItem.textContent = item;
+                                historyItem.style.cursor = 'pointer';
+                                historyItem.addEventListener('click', () => {
+                                    document.getElementById('search-query').value = item; // 点击历史记录填充到输入框
+                                });
+                                historyContent.appendChild(historyItem);
+                            });
+                            historyContainer.style.display = 'block'; // 显示浮窗
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching history:', error);
+                    });
             } else {
-                // 用户未登录，显示登录按钮
+                // 用户未登录，隐藏浮窗
                 usernameElement.textContent = '';
                 loginBtn.style.display = 'inline-block';
                 logoutBtn.style.display = 'none';
+                historyContainer.style.display = 'none';
             }
+
+            fetch('http://127.0.0.1:5000/recommendations', {
+                method: 'POST',
+                headers: {
+                    'Access-Control-Allow-Origin': 'http://127.0.0.1',
+                    'Content-Type': 'application/json',
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const recommendations = data.recommend || ["推荐1", "推荐2"];//data.recommendations || []; // 假设返回 JSON 格式：{ "recommendations": ["推荐1", "推荐2", ...] }
+                    recommendationList.innerHTML = ''; // 清空之前的推荐内容
+                    recommendations.forEach(item => {
+                        console.log(item)
+                        const listItem = document.createElement('li');
+                        const link = document.createElement('a');
+                        link.href = item.url;
+                        link.textContent = item.title;
+                        listItem.appendChild(link);
+                        recommendationList.appendChild(listItem);
+                    });
+                    recommendationContainer.style.display = 'block'; // 显示推荐窗口
+                })
+                .catch(error => {
+                    console.error('Error fetching recommendations:', error);
+                });
         };
 
         // 登录按钮点击事件
-        document.getElementById('login-btn').addEventListener('click', function() {
+        document.getElementById('login-btn').addEventListener('click', function () {
             const username = prompt("请输入用户名：");
 
             if (username) {
@@ -136,7 +256,7 @@
         });
 
         // 注销按钮点击事件
-        document.getElementById('logout-btn').addEventListener('click', function() {
+        document.getElementById('logout-btn').addEventListener('click', function () {
             localStorage.removeItem('user'); // 删除登录信息
             window.location.reload(); // 刷新页面以更新显示
         });
@@ -145,7 +265,7 @@
         document.getElementById('search-button').addEventListener('click', function () {
             const query = document.getElementById('search-query').value;
             const searchType = document.querySelector('input[name="search-type"]:checked').value;  // 获取选择的搜索类型
-            
+
             if (!query) {
                 alert('请输入一个查询语句');
                 return;
@@ -165,15 +285,39 @@
                     const resultsContainer = document.getElementById('results');
                     resultsContainer.innerHTML = ''; // 清空之前的结果
 
+                    const history = data.history || []; // 假设返回 JSON 格式：{ "history": ["记录1", "记录2", ...] }
+                    if (history.length > 0) {
+                        historyContent.innerHTML = ''; // 清空之前的内容
+                        history.forEach(item => {
+                            const historyItem = document.createElement('div');
+                            historyItem.textContent = item;
+                            historyItem.style.cursor = 'pointer';
+                            historyItem.addEventListener('click', () => {
+                                document.getElementById('search-query').value = item; // 点击历史记录填充到输入框
+                            });
+                            historyContent.appendChild(historyItem);
+                        });
+                        historyContainer.style.display = 'block'; // 显示浮窗
+                    }
+
                     if (data.results && data.results.length > 0) {
                         data.results.forEach(result => {
                             const resultDiv = document.createElement('div');
                             resultDiv.classList.add('result');
                             resultDiv.innerHTML = `
-                                <a href="${result.url}" target="_blank">${result.title}</a>
-                                <p>${result.body}</p>
-                            `;
+                        <a href="${result.url}" target="_blank" class="search-link">${result.title}</a>
+                        <p>${result.body}</p>
+                    `;
                             resultsContainer.appendChild(resultDiv);
+                        });
+
+                        // 添加事件监听器，处理链接点击事件
+                        const links = document.querySelectorAll('.search-link');
+                        links.forEach(link => {
+                            link.addEventListener('click', function (event) {
+                                // 这里处理对于点击时记录的更新
+
+                            });
                         });
                     } else {
                         resultsContainer.innerHTML = '<p>未找到查询结果</p>';
@@ -182,7 +326,35 @@
                 .catch(error => {
                     console.error('Error fetching search results:', error);
                 });
+            // 用于推荐处理
+            fetch('http://127.0.0.1:5000/recommendations', {
+                method: 'POST',
+                headers: {
+                    'Access-Control-Allow-Origin': 'http://127.0.0.1',
+                    'Content-Type': 'application/json',
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const recommendations = data.recommend || ["推荐1", "推荐2"];//data.recommendations || []; // 假设返回 JSON 格式：{ "recommendations": ["推荐1", "推荐2", ...] }
+                    recommendationList.innerHTML = ''; // 清空之前的推荐内容
+                    recommendations.forEach(item => {
+                        console.log(item)
+                        const listItem = document.createElement('li');
+                        const link = document.createElement('a');
+                        link.href = item.url;
+                        link.textContent = item.title;
+                        listItem.appendChild(link);
+                        recommendationList.appendChild(listItem);
+                    });
+                    recommendationContainer.style.display = 'block'; // 显示推荐窗口
+                })
+                .catch(error => {
+                    console.error('Error fetching recommendations:', error);
+                });
         });
+
     </script>
 </body>
+
 </html>

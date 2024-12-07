@@ -7,8 +7,6 @@ from collections import defaultdict
 import numpy as np
 from scipy.sparse import csr_matrix,lil_matrix
 from scipy.linalg import norm
-import requests
-from bs4 import BeautifulSoup
 from urllib.parse import urljoin  # import urljoin to deal with relative path
 from urllib.parse import urlparse  # import urlparse to deal with relative path
 

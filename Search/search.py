@@ -105,7 +105,7 @@ def search(query, tfidf_matrix, vectorizer, urls, pageranks, features, alpha = 0
             results.append((url, combined_score))  # Store url and similarities
     results = sorted(results, key=lambda x: (x[1],-len(x[0])), reverse=True)
 
-    return results
+    return results, query_tfidf
 
 '''
 query = input()
