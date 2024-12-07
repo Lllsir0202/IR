@@ -37,7 +37,7 @@ def get_link_graph(json_dir):
     return link_graph
 
 # Then We should calculate pagerank
-def cal_pagerank(link_graph, d = 0.85, max_iter = 100, tol = 1e-4):
+def cal_pagerank(link_graph, d = 0.85, max_iter = 100, tol = 1e-3):
     # First we need to convert graph to numpy
     # Get urls
     nodes = list(link_graph.keys())
@@ -94,8 +94,9 @@ def cal_pagerank(link_graph, d = 0.85, max_iter = 100, tol = 1e-4):
             print(f'Start to save pagescore...')
             break
         pagerank = new_pagerank
-        
+
     pagerankscore = {nodes[i]: pagerank[i] for i in range(N)}
+
     return pagerankscore
     
 

@@ -28,7 +28,7 @@ def segment_words(text):
     stopwords = load_stopwords(file_dir=file_dir)
     words = jieba.lcut(text)
     filter_words = [word for word in words if word not in stopwords]
-    return filter_words
+    return " ".join(filter_words)   # Using spaces to split the filter_words
 
 # Then load the url and the text
 # This is for body
@@ -40,11 +40,11 @@ def load_body(file_dir):
             file_path = os.path.join(file_dir, file_name)
             with open(file_path, "r", encoding='utf-8') as file:
                 data = json.load(file)
-                body = data.get('body')
+                body = data.get('body','')
                 url = data.get('url')
                 if body:
-                    texts.extend(segment_words(body))
-                doc_ids.append(url)
+                    texts.append(segment_words(body))
+                    doc_ids.append(url)
                 print(f'Succeed to load body of {url}...')
     return doc_ids, texts
 
@@ -60,8 +60,8 @@ def load_title(file_dir):
                 title = data.get('title','')
                 url = data.get('url')
                 if title:
-                    texts.extend(segment_words(title))
-                doc_ids.append(url)
+                    texts.append(segment_words(title))
+                    doc_ids.append(url)
                 print(f'Succeed to load title of {url}...')
     return doc_ids, texts
 
@@ -85,6 +85,7 @@ def save_tfidf_and_mapping_body(tfidf_matrix, feature_names, urls, output_dir):
     # url -> tf-idf map
     with open(os.path.join(output_dir, 'urls_body.pkl'), 'wb') as f:
         pickle.dump(urls, f)
+    print("Succeed to save tf-idf of body!")  
 
 # Store tfidf mapped to urls
 def save_tfidf_and_mapping_title(tfidf_matrix, feature_names, urls, output_dir):
@@ -95,9 +96,12 @@ def save_tfidf_and_mapping_title(tfidf_matrix, feature_names, urls, output_dir):
     # url -> tf-idf map
     with open(os.path.join(output_dir, 'urls_title.pkl'), 'wb') as f:
         pickle.dump(urls, f)
+    print("Succeed to save tf-idf of title!")  
+    
 
 
 file_dir = 'crawled_link_data'
+# file_dir = 'test'
 output_dir = 'data/tfidf'
 
 # Get documents and urls

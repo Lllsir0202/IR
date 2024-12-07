@@ -21,8 +21,17 @@ In directory ``PageRank``, And I finish a Makefile to make it , you can use comm
 
 Although I do the part of inverted index , but in fact it seems not used in my tasks. Because I will use ``sklearn`` to finish the part of ``td-idf``
 
-You can use command ``make invert`` to cal all words of title and body into inverted index but be careful because its size is very huge
+You can use command ``make invert`` to calculate all words of title and body into inverted index but be careful because its size is very huge
 
 ## Tf-Idf
 
 In this part I will use ``sklearn`` to calculate it automatically.
+
+You can use command ``make tfidf`` to call function to calculate it automatically, but because of the large quantities of jsons, it may take some time.(Also divide ``title`` and ``body``)
+
+## Serach
+In this part I also use ``sklearn`` to calculate the nearest file.
+
+But differently with passed work, I divided ``title`` and ``body`` into different json, and it make it more accuate for search
+
+You can use command ``make search`` to call the function to search , and following ,I will make a ``flask`` or so to make it more free to use. 

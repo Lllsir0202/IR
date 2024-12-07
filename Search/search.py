@@ -29,7 +29,7 @@ def segment_words(text):
     stopwords = load_stopwords(file_dir=file_dir)
     words = jieba.lcut(text)
     filter_words = [word for word in words if word not in stopwords]
-    return filter_words
+    return " ".join(filter_words)
 
 # Load pagerank
 def load_pagerank(pagerank_file):
@@ -61,7 +61,7 @@ def load_tfidf_and_mapping_title(input_dir):
 
 # calculateTf-Idf vector of query
 def compute_query_tfidf(query, vectorizer):
-    query_tfidf = vectorizer.transform(query)  # Transform query into vector
+    query_tfidf = vectorizer.transform([query])  # Transform query into vector
     return query_tfidf
 
 # calculate query results
@@ -75,17 +75,19 @@ def search(query, tfidf_matrix, vectorizer, urls, pageranks, alpha = 0.7, beta =
     # get most relative file
     similar_indices = cosine_similarities.argsort().flatten()[::-1]
     
+
+    N = len(urls)
+
     results = []
     for index in similar_indices:
-        print(index)
-        if index < len(urls):
-            url = urls[index]
-            pagerank = pageranks.get(url, 0)
-            combined_score = cosine_similarities[0, index] * beta + pagerank * alpha
-            results.append((url, combined_score))  # Store url and similarities
+        url = urls[index]
+        pagerank = pageranks.get(url, 1 / N)
+        if cosine_similarities[0,index] == 1:
+            combined_score = 1
         else:
-            break
-    results = sorted(results, key=lambda x: x[1], reverse=True)
+            combined_score = cosine_similarities[0, index] * alpha + pagerank * beta
+        results.append((url, combined_score))  # Store url and similarities
+    results = sorted(results, key=lambda x: (x[1],-len(x[0])), reverse=True)
 
     return results
 
@@ -103,5 +105,5 @@ vectorizer.fit(features)
 
 results = search(query, loaded_matrix, vectorizer, loaded_urls, pageranks)
 
-for url, score in results[:5]:  # 只输出前5个结果
+for url, score in results[:10]:  # 只输出前5个结果
     print(f"URL: {url}, Combined_score: {score}")
