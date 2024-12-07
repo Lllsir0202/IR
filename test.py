@@ -33,6 +33,5 @@ for file_name in os.listdir(json_dir):
                 body = data.get('body')
                 title = data.get('title')
                 links = data.get('links')
-                if links:
-                    if "https://www.nankai.edu.cn" in links:
-                        print(f'url is {url}, title is {title}')
+                if url == "https://law.nankai.edu.cn":
+                    print(f'url is {url}, title is {title}')

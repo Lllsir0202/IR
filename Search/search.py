@@ -6,6 +6,7 @@ import numpy as np
 from scipy.sparse import load_npz
 import pickle
 import jieba
+import re
 
 # First we need to read all of the jsons
 # Because of the quantities of jsons
@@ -18,8 +19,7 @@ def load_stopwords(file_dir):
             file_path = os.path.join(file_dir, file_name)
             with open(file_path, "r", encoding='utf-8') as file:
                 # Store all stopwords in set
-                stopwords.update(file.read().splitlines())
-    
+                stopwords.update(file.read().splitlines())    
     # ret set
     return stopwords
 
@@ -30,6 +30,16 @@ def segment_words(text):
     words = jieba.lcut(text)
     filter_words = [word for word in words if word not in stopwords]
     return " ".join(filter_words)
+
+# Use this function to solve questions of ? and *
+def process_query(query, feature):
+    result = []
+    query = query.replace('*','.*')
+    query = query.replace('?','.')
+    for word in feature:
+        if re.match(query,word):
+            result.append(word)
+    return " ".join(result)
 
 # Load pagerank
 def load_pagerank(pagerank_file):
@@ -65,8 +75,11 @@ def compute_query_tfidf(query, vectorizer):
     return query_tfidf
 
 # calculate query results
-def search(query, tfidf_matrix, vectorizer, urls, pageranks, alpha = 0.7, beta = 0.3):
-    query_list = segment_words(query)
+def search(query, tfidf_matrix, vectorizer, urls, pageranks, features, alpha = 0.7, beta = 0.3):
+    if '?' in query or '*' in query:
+        query_list = process_query(query=query, feature=features)
+    else:
+        query_list = segment_words(query)
     query_tfidf = compute_query_tfidf(query_list, vectorizer)
     
     # calculate cos
@@ -84,6 +97,8 @@ def search(query, tfidf_matrix, vectorizer, urls, pageranks, alpha = 0.7, beta =
         pagerank = pageranks.get(url, 1 / N)
         if cosine_similarities[0,index] == 1:
             combined_score = 1
+        if cosine_similarities[0,index] == 0:
+            combined_score = 0
         else:
             combined_score = cosine_similarities[0, index] * alpha + pagerank * beta
         results.append((url, combined_score))  # Store url and similarities
@@ -91,7 +106,7 @@ def search(query, tfidf_matrix, vectorizer, urls, pageranks, alpha = 0.7, beta =
 
     return results
 
-
+'''
 query = input()
 
 
@@ -103,7 +118,7 @@ inputdir = "data/tfidf"
 loaded_matrix, features, loaded_urls = load_tfidf_and_mapping_body(input_dir=inputdir)
 vectorizer.fit(features)
 
-results = search(query, loaded_matrix, vectorizer, loaded_urls, pageranks)
+results = search(query, loaded_matrix, vectorizer, loaded_urls, pageranks, features)
 
-for url, score in results[:10]:  # 只输出前5个结果
-    print(f"URL: {url}, Combined_score: {score}")
+for url, score in results[:10]:
+    print(f"URL: {url}, Combined_score: {score}")'''

@@ -13,11 +13,14 @@ TFIDF = Tf_Idf/tf_idf.py
 # Define Search
 SEARCH = Search/search.py
 
+# Define App
+APP = Search/app.py
+
 # Targets
 # First write about make pagerank
 # Second write about make inverted_index
 # Third write about make tf_idf
-.PHONY: pagerank invert tfidf search
+.PHONY: pagerank invert tfidf search app
 
 # make pagerank
 pagerank:
@@ -34,3 +37,7 @@ tfidf:
 # make search
 search:
 	$(PYTHON) $(SEARCH)
+
+# make app
+app:
+	$(PYTHON) $(APP)

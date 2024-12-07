@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Engine</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { margin: 10px 0; }
+        .result a { color: blue; text-decoration: none; }
+        .result a:hover { text-decoration: underline; }
+        .result p { margin: 5px 0; color: gray; }
+    </style>
+</head>
+<body>
+    <h1>搜索引擎</h1>
+    <input type="text" id="search-query" placeholder="Enter your query..." style="width: 300px; padding: 5px;" />
+    <button id="search-button">Search</button>
+
+    <div id="results"></div>
+
+    <script>
+        document.getElementById('search-button').addEventListener('click', function () {
+            const query = document.getElementById('search-query').value;
+            if (!query) {
+                alert('请输入一个查询语句');
+                return;
+            }
+
+            // 发起 AJAX 请求到 Flask API
+            fetch('http://127.0.0.1:5000/search', {
+                method: 'POST',
+                headers: {
+                    'Access-Control-Allow-Origin': 'http://127.0.0.1',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ query: query })  // 将查询放入请求体中
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data)
+                    const resultsContainer = document.getElementById('results');
+                    resultsContainer.innerHTML = ''; // 清空之前的结果
+
+                    if (data.results && data.results.length > 0) {
+                        data.results.forEach(result => {
+                            const resultDiv = document.createElement('div');
+                            resultDiv.classList.add('result');
+                            resultDiv.innerHTML = `
+                                <a href="${result.url}" target="_blank">${result.title}</a>
+                                <p>${result.body}</p>
+                            `;
+                            resultsContainer.appendChild(resultDiv);
+                        });
+                    } else {
+                        resultsContainer.innerHTML = '<p>未找到查询结果</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching search results:', error);
+                });
+        });
+    </script>
+</body>
+</html>

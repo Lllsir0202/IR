@@ -35,3 +35,8 @@ In this part I also use ``sklearn`` to calculate the nearest file.
 But differently with passed work, I divided ``title`` and ``body`` into different json, and it make it more accuate for search
 
 You can use command ``make search`` to call the function to search , and following ,I will make a ``flask`` or so to make it more free to use. 
+
+## App
+In this part we want to use ``flask`` to make a page to search more efficiently for users.
+
+You can use command ``make app`` to start the back side if you have finished all of the previous steps.
