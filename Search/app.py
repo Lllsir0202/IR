@@ -5,9 +5,16 @@ import os
 import json
 from flask_cors import CORS
 import re
-import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from scipy.sparse import load_npz , save_npz
+import requests
+from bs4 import BeautifulSoup
+
+# Used for url as filename 
+from urllib.parse import quote, unquote
+from selenium import webdriver
+from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
 
 app = Flask(__name__)
 CORS(app)  # 启用跨域支持
@@ -30,7 +37,7 @@ vectorizer_title.fit(features_title)
 
 # Load user data
 userdatapath = 'Userdata'
-currentuser = 'visiter'
+currentuser = 'visitor'
 currentlog = []
 history = []
 
@@ -46,20 +53,19 @@ def home():
         else:  # 默认为按内容搜索
             results, query_tfidf = search(query, loaded_matrix_body, vectorizer_body, loaded_urls_body, pageranks, features_body)
 
-        if currentuser != 'visiter':
-            filepath = currentuser + ".json"
-            filename = os.path.join(userdatapath, filepath)
-            with open(filename, "r",encoding='utf-8') as file:
-                data = json.load(file)
-                history = data.get('history')
-                if query not in history:
-                    history.append(query)
-                else:
-                    history.remove(query)
-                    history.append(query)
-            with open(filename, "w", encoding='utf-8') as file:
-                history = history[:20]
-                json.dump({"history":history},file, indent=4, ensure_ascii=False)
+        filepath = currentuser + ".json"
+        filename = os.path.join(userdatapath, filepath)
+        with open(filename, "r",encoding='utf-8') as file:
+            data = json.load(file)
+            history = data.get('history')
+            if query not in history:
+                history.append(query)
+            else:
+                history.remove(query)
+                history.append(query)
+        with open(filename, "w", encoding='utf-8') as file:
+            history = history[:20]
+            json.dump({"history":history},file, indent=4, ensure_ascii=False)
 
 
         results_dict = {url: score for url, score in results}
@@ -68,6 +74,10 @@ def home():
 
         data_path = 'crawled_link_data'
         final_results = []
+
+        # Add snapshots
+        snappath = "Search/templates/Snapshots"
+        sendpath = "Snapshots"
 
         for file_name in os.listdir(data_path):
             if file_name.endswith('json'):
@@ -85,14 +95,28 @@ def home():
                             title = cleaned_title
                         else:
                             text = body
-                        final_results.append({
-                            'score': results_dict[url],
-                            'url': url,
-                            'title': title,
-                            'body': text
-                        })
+                        encoded_url = url.replace(':', '').replace('/', '').replace('?','') # Encode url
+                        urlpath = encoded_url
+                        snapshot = os.path.join(snappath, urlpath)
+                        path = os.path.join(sendpath,urlpath)
+                        if os.path.exists(snapshot):
+                            path = os.path.join(path, "index.html")
+                            final_results.append({
+                                'score': results_dict[url],
+                                'url': url,
+                                'title': title,
+                                'body': text,
+                                'snapshot':path
+                            })
+                        else:
+                            final_results.append({
+                                'score': results_dict[url],
+                                'url': url,
+                                'title': title,
+                                'body': text,
+                            })
+        
         final_results = sorted(final_results, key=lambda x: (x['score'] ,-len(x['url'])), reverse=True)
-        print(history)
         return jsonify({'results': final_results, 'history':history})
     
     return jsonify({'results': None, 'history':None})
@@ -188,6 +212,51 @@ def recommend():
 
                 return jsonify({'recommend': final_results[:5]})
         return jsonify({'recommend':[]})
+
+@app.route('/snapshot', methods=['GET', 'POST'])
+def save_html_with_resources():
+    if request.method == 'POST':
+        data = request.get_json()
+        url = data.get('url', '')
+        snappath = "Search/templates/Snapshots"
+        encoded_url = url.replace(':', '').replace('/', '').replace('?','')
+        save_dir = os.path.join(snappath, encoded_url)
+
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+
+            # 下载 HTML
+            response = requests.get(url)
+            response.encoding = "utf-8"  # 手动指定编码
+            html_content = response.text
+
+            # 解析 HTML
+            soup = BeautifulSoup(html_content, 'html.parser')
+
+            # 下载所有资源
+            for tag in soup.find_all(['img', 'link', 'script']):
+                src = tag.get('src') or tag.get('href')
+                if src:
+                    resource_url = requests.compat.urljoin(url, src)
+                    resource_path = os.path.join(save_dir, os.path.basename(src))
+
+                    # 下载资源
+                    resource_data = requests.get(resource_url).content
+                    with open(resource_path, 'wb') as f:
+                        f.write(resource_data)
+
+                    # 修改 HTML 中的路径
+                    if tag.name == 'img':
+                        tag['src'] = os.path.basename(src)
+                    else:
+                        tag['href'] = os.path.basename(src)
+
+            # 保存修改后的 HTML
+            with open(os.path.join(save_dir, 'index.html'), 'w', encoding='utf-8') as f:
+                f.write(str(soup))
+
+        return jsonify({'success': 'ok', 'snapshot_url': f'/snapshots/{encoded_url}/index.html'})
+
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -4,3 +4,6 @@ crawled_link_data/
 
 # Not push data and model
 data/
+
+# Not push snapshots
+Search/templates/Snapshots
