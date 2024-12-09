@@ -40,3 +40,11 @@ You can use command ``make search`` to call the function to search , and followi
 In this part we want to use ``flask`` to make a page to search more efficiently for users.
 
 You can use command ``make app`` to start the back side if you have finished all of the previous steps.
+
+And It has a essential frontier page as ``index.html``, and it has capability of ``login in `` and ``login out ``. It remains ``login`` state until user decided to loginout. Also I add a ``visitor`` to store all unlogin history but it has some points to optimize. 
+
+## Some details
+In this part , I want to introduce some details of some points.
+
+### Snapshots
+I deal with snapshots as a ``cache``. When user ``click`` a page and we will store ``all of the resources of the page``, accordlying when your meet this page again, you can ``click`` the new botton ``View Snapshot`` to view the local resouces of the page, However in some cases, it may have some questions ^ - ^
