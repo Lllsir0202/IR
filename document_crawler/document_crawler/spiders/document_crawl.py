@@ -13,7 +13,7 @@ class DocumentSpider(scrapy.Spider):
     name = 'document_spider'
     allowed_domains = ['nankai.edu.cn']
     start_urls = list()
-    output_directory = '../crawled_link_data'  # 保存路径，使用绝对路径
+    output_directory = '../crawled_link_data'
 
     def __init__(self, *args, **kwargs):
         super(DocumentSpider, self).__init__(*args, **kwargs)

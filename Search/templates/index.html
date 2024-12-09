@@ -254,7 +254,7 @@
                 fetch('http://127.0.0.1:5000/recommendations', {
                     method: 'POST',
                     headers: {
-                        'Access-Control-Allow-Origin': 'http://127.0.0.1',
+                        //'Access-Control-Allow-Origin': 'http://127.0.0.1',
                         'Content-Type': 'application/json',
                     }
                 })
@@ -281,12 +281,11 @@
 
         // 注销按钮点击事件
         document.getElementById('logout-btn').addEventListener('click', function () {
-            localStorage.removeItem('user'); // 删除登录信息
-            // 发起请求获取历史记录
+            // 更新用户名
             fetch('http://127.0.0.1:5000/login', {
                 method: 'POST',
                 headers: {
-                    'Access-Control-Allow-Origin': 'http://127.0.0.1',
+                    //'Access-Control-Allow-Origin': 'http://127.0.0.1',
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ username: "visitor" }) // 发送用户名
@@ -311,6 +310,7 @@
                 .catch(error => {
                     console.error('Error fetching history:', error);
                 });
+            localStorage.removeItem('user'); // 删除登录信息
             window.location.reload(); // 刷新页面以更新显示
         });
 
@@ -328,7 +328,7 @@
             fetch('http://127.0.0.1:5000/search', {
                 method: 'POST',
                 headers: {
-                    'Access-Control-Allow-Origin': 'http://127.0.0.1',
+                    //'Access-Control-Allow-Origin': 'http://127.0.0.1',
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ query: query, search_type: searchType })  // 将查询和搜索类型传递

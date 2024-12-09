@@ -75,7 +75,7 @@ def compute_query_tfidf(query, vectorizer):
     return query_tfidf
 
 # calculate query results
-def search(query, tfidf_matrix, vectorizer, urls, pageranks, features, alpha = 0.7, beta = 0.3):
+def search(query, tfidf_matrix, vectorizer, urls, pageranks, features, username, alpha = 0.6, beta = 0.2):
     if '?' in query or '*' in query:
         query_list = process_query(query=query, feature=features)
     else:
@@ -89,6 +89,17 @@ def search(query, tfidf_matrix, vectorizer, urls, pageranks, features, alpha = 0
     similar_indices = cosine_similarities.argsort().flatten()[::-1]
     
 
+    # Append history into consideration
+    userdatapath = 'Userdata'
+    filepath = username + ".json"
+    filename = os.path.join(userdatapath, filepath)
+    with open(filename, "r",encoding='utf-8') as file:
+        data = json.load(file)
+        history = data.get('history')
+    history_query = " ".join(history)
+    history_tfidf = compute_query_tfidf(history_query,vectorizer)
+    history_scores = cosine_similarity(history_tfidf, tfidf_matrix).flatten()
+
     N = len(urls)
 
     results = []
@@ -100,7 +111,7 @@ def search(query, tfidf_matrix, vectorizer, urls, pageranks, features, alpha = 0
         elif cosine_similarities[0,index] == 0:
             combined_score = 0
         else:
-            combined_score = cosine_similarities[0, index] * alpha + pagerank * beta
+            combined_score = cosine_similarities[0, index] * alpha + pagerank * beta + (1-alpha-beta) * history_scores[index]
         if combined_score > 1e-6:
             results.append((url, combined_score))  # Store url and similarities
     results = sorted(results, key=lambda x: (x[1],-len(x[0])), reverse=True)

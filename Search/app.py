@@ -39,7 +39,9 @@ vectorizer_title.fit(features_title)
 userdatapath = 'Userdata'
 currentuser = 'visitor'
 currentlog = []
+# Remember history need to reorder
 history = []
+
 
 @app.route('/search', methods=['GET', 'POST'])
 def home():
@@ -47,11 +49,12 @@ def home():
         data = request.get_json()
         query = data.get('query')
         search_type = data.get('search_type', 'title')  # 获取搜索类型，默认按标题搜索
+        
 
         if search_type == 'title':
-            results, query_tfidf = search(query, loaded_matrix_title, vectorizer_title, loaded_urls_title, pageranks, features_title)
+            results, query_tfidf = search(query, loaded_matrix_title, vectorizer_title, loaded_urls_title, pageranks, features_title ,currentuser)
         else:  # 默认为按内容搜索
-            results, query_tfidf = search(query, loaded_matrix_body, vectorizer_body, loaded_urls_body, pageranks, features_body)
+            results, query_tfidf = search(query, loaded_matrix_body, vectorizer_body, loaded_urls_body, pageranks, features_body, currentuser)
 
         filepath = currentuser + ".json"
         filename = os.path.join(userdatapath, filepath)
@@ -64,7 +67,7 @@ def home():
                 history.remove(query)
                 history.append(query)
         with open(filename, "w", encoding='utf-8') as file:
-            history = history[:20]
+            history = history[-20:]
             json.dump({"history":history},file, indent=4, ensure_ascii=False)
 
 
@@ -117,7 +120,7 @@ def home():
                             })
         
         final_results = sorted(final_results, key=lambda x: (x['score'] ,-len(x['url'])), reverse=True)
-        return jsonify({'results': final_results, 'history':history})
+        return jsonify({'results': final_results, 'history':history[-5:]})
     
     return jsonify({'results': None, 'history':None})
 
@@ -141,7 +144,7 @@ def login():
                 data = json.load(file)
                 history = data.get('history','')
                 if history:
-                    history = history[:5]
+                    history = history[-5:]
                             # Return history
                 return jsonify({'history':history})
 

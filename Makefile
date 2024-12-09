@@ -22,6 +22,8 @@ APP = Search/app.py
 # Third write about make tf_idf
 .PHONY: pagerank invert tfidf search app
 
+all: app
+
 # make pagerank
 pagerank:
 	$(PYTHON) $(PAGERANK)
