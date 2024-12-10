@@ -48,3 +48,56 @@ In this part , I want to introduce some details of some points.
 
 ### Snapshots
 I deal with snapshots as a ``cache``. When user ``click`` a page and we will store ``all of the resources of the page``, accordlying when your meet this page again, you can ``click`` the new botton ``View Snapshot`` to view the local resouces of the page, However in some cases, it may have some questions ^ - ^
+
+## Projects
+    Project/
+    │
+    ├── crawled_link_data/
+    |       
+    │
+    ├── data/
+    │
+    ├── document_crawler/
+    │
+    ├── Inverted_Index/
+    │
+    ├── PageRank/
+    |
+    ├── Search/
+    |       ├── templates/
+    |       |           ├── Sanpshots/
+    |       |           ├── index.html
+    |       |           ├── search.svg
+    |       |
+    |       ├── search.py
+    |       |
+    |       ├── app.py    
+    |
+    ├── stopwords/
+    |
+    ├── test/
+    |
+    ├── Tf_idf/
+    |
+    ├── Userdata/
+    |
+    ├── Makefile
+Follolwing are some simple introductions to the project directories.
+
+``document_crawler`` is the ``scrapy`` project used for spider(just as its name).
+
+``Inverted_index`` is used to build inverted index but we haven't use it at the full process.
+
+``PageRank`` is used to set up ``link graph`` and calculate ``pagerank`` as well as store it into directory ``data/pr_score``.
+
+``Search`` directory is the main py file of the ``Web Search Engine`` and it finishes the frontier and background as well as solve search from the dataset.
+
+``stopwords`` stores some popular ``stopwords`` includeing:``baidu_stopwords``,``cn_stopwords``,``hit_stopwords`` and ``scu_stopwords`` from github [reposity](https://github.com/goto456/stopwords)
+
+``test`` is a ``very`` small dataset of of the full dataset and I use it to test in some cases.(just to avoid very very... long time of waiting calculating)
+
+``Tf_Idf`` is used to calculate ``tfidf`` weight and store it as ``npz`` as well as store ``features`` as ``text``.
+
+``Userdata`` is used by the ability of ``user login`` and ``recommendation`` and so on personal capability. It stores all users' histories as ``json`` files.
+
+``Makefile`` is just as I haven't intruduced previously, and I have given the ``command`` before. 
