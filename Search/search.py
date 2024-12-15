@@ -29,6 +29,7 @@ def segment_words(text):
     stopwords = load_stopwords(file_dir=file_dir)
     words = jieba.lcut(text)
     filter_words = [word for word in words if word not in stopwords]
+    # print(filter_words)
     return " ".join(filter_words)
 
 # Use this function to solve questions of ? and *
