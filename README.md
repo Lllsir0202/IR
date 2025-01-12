@@ -100,4 +100,4 @@ Follolwing are some simple introductions to the project directories.
 
 ``Userdata`` is used by the ability of ``user login`` and ``recommendation`` and so on personal capability. It stores all users' histories as ``json`` files.
 
-``Makefile`` is just as I haven't intruduced previously, and I have given the ``command`` before. 
+``Makefile`` is just as I have intruduced previously, and I have given the ``command`` before. 
